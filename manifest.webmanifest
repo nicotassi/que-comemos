@@ -1,0 +1,23 @@
+{
+  "name": "¿Qué comemos? — Planificador de comidas",
+  "short_name": "Qué comemos",
+  "description": "Menú semanal, heladera, mandados y recetas para la familia.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FDF6ED",
+  "theme_color": "#4A7C59",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Planificar semana", "url": "./#planificar" },
+    { "name": "Lista de mandados", "url": "./#mandados" },
+    { "name": "¿Qué hay en la heladera?", "url": "./#heladera" }
+  ]
+}

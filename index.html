@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>¿Qué comemos?</title>
+<meta name="description" content="Planificador de comidas familiar: menú semanal, heladera, mandados y recetas.">
+<meta name="theme-color" content="#4A7C59">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Qué comemos">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Lora:ital,wght@0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #4A7C59;
+    --verde-claro: #6BAF80;
+    --crema: #FDF6ED;
+    --naranja: #E8844A;
+    --naranja-suave: #F9C89B;
+    --marron: #7A4F3A;
+    --texto: #2E1F0E;
+    --gris: #8A7F76;
+    --gris-claro: #F0EAE3;
+    --blanco: #FFFFFF;
+    --rojo: #C94040;
+    --amarillo: #F2C94C;
+    --header-h: 60px;
+    --nav-h: 62px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+    background: var(--crema);
+    color: var(--texto);
+    overscroll-behavior: none;
+  }
+
+  button { font-family: inherit; color: inherit; }
+
+  /* LAYOUT: barras fijas, solo se mueve el contenido */
+  .app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    flex-shrink: 0;
+    background: var(--verde);
+    padding: calc(12px + var(--safe-top)) 16px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 100;
+  }
+  .header h1 {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 22px;
+    color: var(--crema);
+    font-style: italic;
+    line-height: 1.15;
+  }
+  .header p {
+    font-size: 12px;
+    color: var(--naranja-suave);
+    margin-top: 2px;
+  }
+  .header-btn {
+    background: rgba(255,255,255,0.18);
+    border: none;
+    color: white;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .content-inner { max-width: 640px; margin: 0 auto; }
+
+  /* NAV BOTTOM */
+  .nav-bottom {
+    flex-shrink: 0;
+    background: var(--blanco);
+    border-top: 2px solid var(--gris-claro);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 2px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gris);
+    cursor: pointer;
+    border: none;
+    background: none;
+    gap: 3px;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--verde); }
+  .nav-btn .icon { font-size: 21px; line-height: 1; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px 16px 24px; }
+  .screen.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--blanco);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gris);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .card-head .card-title { margin-bottom: 0; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--verde); color: white; }
+  .btn-primary:active { background: var(--verde-claro); }
+  .btn-danger { background: var(--rojo); color: white; }
+  .btn-naranja { background: var(--naranja); color: white; }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--verde);
+    color: var(--verde);
+  }
+  .btn-sm { padding: 6px 14px; font-size: 13px; }
+  .btn-block { display: block; width: 100%; text-align: center; margin-bottom: 8px; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  /* HOY */
+  .hoy-comida {
+    background: linear-gradient(135deg, var(--verde) 0%, var(--verde-claro) 100%);
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hoy-comida.cena { background: linear-gradient(135deg, #7A4F3A 0%, #A0704F 100%); }
+  .hoy-comida::before {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .hoy-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.85;
+    margin-bottom: 4px;
+  }
+  .hoy-nombre {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  .hoy-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .hoy-btn {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 4px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+  }
+  .hoy-btn:active { background: rgba(255,255,255,0.35); }
+
+  /* DÍAS SEMANA */
+  .dia-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gris-claro);
+    gap: 10px;
+    cursor: pointer;
+  }
+  .dia-row:last-child { border-bottom: none; }
+  .dia-nombre {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gris);
+    width: 34px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .dia-comidas { flex: 1; min-width: 0; }
+  .dia-comida-tag {
+    font-size: 13px;
+    color: var(--texto);
+    font-weight: 600;
+    display: block;
+    line-height: 1.4;
+  }
+  .dia-comida-tag.cena { color: var(--marron); }
+  .dia-comida-tag.vacio { color: var(--gris); font-weight: 400; }
+  .dia-hoy .dia-nombre { color: var(--verde); }
+  .dia-hoy .dia-comida-tag:not(.cena):not(.vacio) { color: var(--verde); }
+
+  /* FORMS — 16px evita el zoom automático de iPhone */
+  select, input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 2px solid var(--gris-claro);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 16px;
+    background: white;
+    color: var(--texto);
+    margin-bottom: 8px;
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239A8F86' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    text-overflow: ellipsis;
+  }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--verde); }
+
+  label { font-size: 13px; font-weight: 700; color: var(--gris); display: block; margin-bottom: 4px; }
+
+  .muted { color: var(--gris); font-size: 13px; }
+
+  /* TAGS */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 2px;
+  }
+  .tag-verde { background: #E8F5E9; color: var(--verde); }
+  .tag-naranja { background: #FFF3E0; color: #B85E2B; }
+  .tag-rojo { background: #FFEBEE; color: var(--rojo); }
+
+  /* CHECK OPCIONES (agregar comida) */
+  .chk-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chk {
+    padding: 7px 12px;
+    border: 2px solid var(--gris-claro);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    background: white;
+    cursor: pointer;
+  }
+  .chk.on { border-color: var(--verde); background: #E8F5E9; color: var(--verde); }
+
+  /* INGREDIENTES */
+  .ing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .ing-item {
+    padding: 8px 4px;
+    border: 2px solid var(--gris-claro);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ing-item.selected {
+    border-color: var(--verde);
+    background: #E8F5E9;
+    color: var(--verde);
+  }
+  .ing-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+
+  /* MANDADOS */
+  .mandado-categoria { margin-bottom: 14px; }
+  .mandado-categoria h4 {
+    font-size: 14px;
+    color: var(--naranja);
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mandado-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gris-claro);
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .mandado-item input[type="checkbox"] {
+    width: 20px; height: 20px;
+    accent-color: var(--verde);
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .mandado-item.tachado span { text-decoration: line-through; color: var(--gris); }
+  .mandado-item .quitar { margin-left: auto; background: none; border: none; font-size: 16px; color: var(--gris); cursor: pointer; padding: 0 4px; }
+
+  /* RECETA */
+  .receta-paso {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .paso-num {
+    width: 28px; height: 28px;
+    background: var(--naranja);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .paso-texto { font-size: 15px; line-height: 1.5; padding-top: 3px; }
+
+  /* NUTRI */
+  .nutri-bar { margin-bottom: 12px; }
+  .nutri-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .nutri-track {
+    height: 10px;
+    background: var(--gris-claro);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .nutri-fill { height: 100%; border-radius: 10px; transition: width 0.4s; }
+  .fill-verde { background: var(--verde-claro); }
+  .fill-amarillo { background: var(--amarillo); }
+  .fill-rojo { background: var(--rojo); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(20px + var(--safe-bottom));
+    width: 100%;
+    max-width: 640px;
+    max-height: 88vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: subir 0.22s ease-out;
+  }
+  @keyframes subir { from { transform: translateY(40px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--gris-claro);
+    border-radius: 4px;
+    margin: 0 auto 16px;
+  }
+  .modal-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 21px;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+
+  .section-title {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 19px;
+    font-style: italic;
+    color: var(--marron);
+    margin-bottom: 14px;
+  }
+
+  /* LISTAS */
+  .hist-item, .fav-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gris-claro);
+    gap: 10px;
+  }
+  .hist-item { font-size: 14px; }
+  .hist-item:last-child, .fav-item:last-child { border-bottom: none; }
+  .hist-fecha { color: var(--gris); font-size: 12px; flex-shrink: 0; }
+  .fav-nombre { font-size: 15px; font-weight: 600; min-width: 0; word-break: break-word; }
+  .fav-sub { font-size: 12px; color: var(--gris); }
+  .fav-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .fav-btn {
+    background: none;
+    border: none;
+    font-size: 19px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  /* VISITA */
+  .visita-banner {
+    background: linear-gradient(135deg, var(--naranja), var(--marron));
+    border-radius: 16px;
+    padding: 16px;
+    color: white;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .visita-banner h3 { font-family: 'Lora', Georgia, serif; font-size: 20px; font-style: italic; }
+  .visita-banner p { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+
+  .alert-box {
+    background: #FFF8E1;
+    border-left: 4px solid var(--amarillo);
+    border-radius: 0 12px 12px 0;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .alert-box strong { display: block; font-size: 15px; margin-bottom: 2px; }
+
+  /* PORCIONES */
+  .porciones-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .porc-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--verde);
+    background: white;
+    color: var(--verde);
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .porc-num {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--verde);
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 24px 12px;
+    color: var(--gris);
+  }
+  .empty-state .emoji { font-size: 40px; display: block; margin-bottom: 10px; }
+  .empty-state p { font-size: 14px; }
+
+  .share-btn {
+    background: #25D366;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 15px;
+    font-weight: 600;
+    gap: 10px;
+  }
+  .toggle {
+    width: 48px; height: 28px;
+    flex-shrink: 0;
+    background: #DDD3C9;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: none;
+  }
+  .toggle.on { background: var(--verde); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 22px; height: 22px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { left: 23px; }
+
+  .presupuesto-display { text-align: center; padding: 6px 10px 10px; }
+  .presupuesto-display .monto { font-size: 32px; font-weight: 900; color: var(--verde); }
+  .presupuesto-display .label { font-size: 13px; color: var(--gris); }
+
+  .planif-dia.es-hoy { border: 2px solid var(--verde-claro); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px);
+    transform: translateX(-50%) translateY(20px);
+    background: var(--texto);
+    color: white;
+    padding: 11px 18px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    max-width: calc(100% - 32px);
+    width: max-content;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s;
+    z-index: 300;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .opcion-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 2px solid var(--gris-claro);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: white;
+    width: 100%;
+    text-align: left;
+  }
+  .opcion-card:active { border-color: var(--verde); background: #F3FAF5; }
+  .opcion-card .emoji { font-size: 28px; flex-shrink: 0; }
+  .opcion-card .nombre { font-weight: 700; font-size: 15px; }
+  .opcion-card .sub { font-size: 12px; color: var(--gris); }
+  .opcion-card .accion { margin-left: auto; color: var(--verde); font-weight: 800; font-size: 13px; flex-shrink: 0; }
+
+  .ing-line { padding: 6px 0; font-size: 15px; border-bottom: 1px solid var(--gris-claro); }
+
+  @media (max-width: 360px) {
+    .screen { padding: 12px 12px 20px; }
+    .hoy-nombre { font-size: 21px; }
+    .hoy-btn { font-size: 11px; }
+    .nav-btn { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header class="header">
+  <div>
+    <h1>¿Qué comemos?</h1>
+    <p id="fecha-hoy"></p>
+  </div>
+  <button class="header-btn" onclick="irA('planificar')" aria-label="Planificar semana">📅</button>
+</header>
+
+<main class="content" id="content">
+<div class="content-inner">
+
+<!-- HOY -->
+<section class="screen active" id="screen-hoy">
+  <div id="visita-banner-hoy" style="display:none">
+    <div class="visita-banner">
+      <h3>🎉 Modo Visita activo</h3>
+      <p>Las porciones se calculan con los invitados incluidos</p>
+    </div>
+  </div>
+
+  <div id="alerta-freezer"></div>
+
+  <div class="hoy-comida" id="card-almuerzo">
+    <div class="hoy-label">🌞 Almuerzo de hoy</div>
+    <div class="hoy-nombre" id="hoy-almuerzo-nombre">Sin planificar</div>
+    <div class="hoy-actions">
+      <button class="hoy-btn" onclick="verReceta('almuerzo')">📖 Receta</button>
+      <button class="hoy-btn" onclick="abrirEmergencia('almuerzo')">🆘 Alternativa</button>
+      <button class="hoy-btn" onclick="marcarFavorito('almuerzo')">❤️ Me gustó</button>
+    </div>
+  </div>
+
+  <div class="hoy-comida cena" id="card-cena">
+    <div class="hoy-label">🌙 Cena de hoy</div>
+    <div class="hoy-nombre" id="hoy-cena-nombre">Sin planificar</div>
+    <div class="hoy-actions">
+      <button class="hoy-btn" onclick="verReceta('cena')">📖 Receta</button>
+      <button class="hoy-btn" onclick="abrirEmergencia('cena')">🆘 Alternativa</button>
+      <button class="hoy-btn" onclick="marcarFavorito('cena')">❤️ Me gustó</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Esta semana</div>
+      <button class="btn btn-sm btn-outline" onclick="irA('planificar')">Editar</button>
+    </div>
+    <div id="semana-resumen"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Modo visita</div>
+    <div class="toggle-row">
+      Recibimos invitados hoy
+      <button class="toggle" id="toggle-visita" onclick="toggleVisita()" aria-label="Modo visita"></button>
+    </div>
+    <div id="visita-extra" style="display:none;margin-top:10px">
+      <label>Invitados</label>
+      <div class="porciones-ctrl">
+        <button class="porc-btn" onclick="cambiarInvitados(-1)">−</button>
+        <span class="porc-num" id="invitados-num">2</span>
+        <span class="muted">personas más</span>
+        <button class="porc-btn" onclick="cambiarInvitados(1)">+</button>
+      </div>
+      <p class="muted" style="margin-top:10px">Ideas para recibir: <span id="visita-ideas"></span></p>
+    </div>
+  </div>
+</section>
+
+<!-- PLANIFICAR -->
+<section class="screen" id="screen-planificar">
+  <p class="section-title">Planificá la semana</p>
+
+  <div class="card">
+    <div class="card-title">Porciones familiares</div>
+    <div class="porciones-ctrl">
+      <button class="porc-btn" onclick="cambiarPorciones(-1)">−</button>
+      <span class="porc-num" id="porciones-num">4</span>
+      <span class="muted" style="flex:1">personas</span>
+      <button class="porc-btn" onclick="cambiarPorciones(1)">+</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Atajos</div>
+    <button class="btn btn-naranja btn-block" onclick="completarSemana()">✨ Completar lo que falta</button>
+    <p class="muted" style="text-align:center">Rellena los huecos variando, priorizando favoritas y evitando las que no les gustaron.</p>
+  </div>
+
+  <div id="planificador-dias"></div>
+
+  <div class="card" style="margin-top:8px">
+    <div class="card-title">Agregar comida al banco</div>
+    <input type="text" id="nueva-comida-nombre" placeholder="Nombre de la comida" maxlength="60">
+    <select id="nueva-comida-cat">
+      <option value="carnes">🥩 Carnes</option>
+      <option value="pastas">🍝 Pastas</option>
+      <option value="verduras">🥗 Verduras</option>
+      <option value="guisos">🫕 Guisos y cazuelas</option>
+      <option value="rapidas">⚡ Rápidas</option>
+      <option value="especiales">🌟 Especiales</option>
+    </select>
+    <input type="text" id="nueva-comida-ing" placeholder="Qué hay que comprar (separado por comas)">
+    <label>Tiene…</label>
+    <div class="chk-grid" id="nueva-comida-flags">
+      <button class="chk" data-flag="proteina">🥩 Proteína</button>
+      <button class="chk" data-flag="verdura">🥗 Verdura</button>
+      <button class="chk" data-flag="carbo">🍝 Harinas</button>
+      <button class="chk" data-flag="frito">🍟 Frito</button>
+      <button class="chk" data-flag="descongelar">🧊 Descongelar</button>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="agregarComidaBanco()">+ Agregar al banco</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Mis comidas agregadas</div>
+    <div id="banco-propias"></div>
+  </div>
+</section>
+
+<!-- HELADERA -->
+<section class="screen" id="screen-heladera">
+  <p class="section-title">¿Qué hay en la heladera?</p>
+
+  <div class="card">
+    <div class="card-title">Tocá lo que tenés</div>
+    <div class="ing-grid" id="ingredientes-grid"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="limpiarIngredientes()">Limpiar</button>
+      <button class="btn btn-primary" onclick="buscarConIngredientes()">🔍 Qué cocino</button>
+    </div>
+  </div>
+
+  <div id="sugerencias-heladera"></div>
+</section>
+
+<!-- MANDADOS -->
+<section class="screen" id="screen-mandados">
+  <p class="section-title">Lista de mandados</p>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Para los próximos</div>
+      <select id="mandados-dias" onchange="cambiarDiasMandados(this.value)" style="width:auto;margin:0;padding:6px 32px 6px 10px;font-size:16px">
+        <option value="1">1 día</option>
+        <option value="3">3 días</option>
+        <option value="7">7 días</option>
+      </select>
+    </div>
+    <div id="lista-mandados"></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <input type="text" id="mandado-extra" placeholder="Agregar algo más…" style="margin:0" onkeydown="if(event.key==='Enter')agregarExtra()">
+      <button class="btn btn-primary btn-sm" onclick="agregarExtra()" style="flex-shrink:0">+</button>
+    </div>
+    <button class="share-btn" onclick="compartirMandados()">
+      <span>📱</span> Compartir por WhatsApp
+    </button>
+    <button class="btn btn-outline btn-block" style="margin-top:8px" onclick="limpiarTachados()">Destildar todo</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Presupuesto semanal</div>
+    <div class="presupuesto-display">
+      <div class="monto">$<span id="presupuesto-monto">0</span></div>
+      <div class="label">presupuesto de la semana</div>
+    </div>
+    <input type="number" inputmode="numeric" id="presupuesto-input" placeholder="Presupuesto semanal ($)">
+    <button class="btn btn-primary btn-block" onclick="guardarPresupuesto()">Guardar presupuesto</button>
+  </div>
+</section>
+
+<!-- MÁS -->
+<section class="screen" id="screen-mas">
+  <p class="section-title">Más opciones</p>
+
+  <div class="card">
+    <div class="card-title">❤️ Favoritas</div>
+    <div id="lista-favoritos"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👎 No nos gustaron</div>
+    <div id="lista-rechazados"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Balance de los últimos 7 días</div>
+    <div id="nutri-semana"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Lo que comieron</div>
+    <div id="historial-lista"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tus datos</div>
+    <p class="muted" style="margin-bottom:10px">Todo se guarda en este teléfono. Hacé una copia para pasarla a otro dispositivo o no perderla.</p>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="exportarDatos()">⬇️ Copia</button>
+      <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">⬆️ Restaurar</button>
+    </div>
+    <input type="file" id="import-file" accept="application/json,.json" style="display:none" onchange="importarDatos(this)">
+    <button class="btn btn-block" style="margin-top:10px;background:none;color:var(--rojo);font-size:13px" onclick="borrarTodo()">Borrar todos los datos</button>
+  </div>
+  <p class="muted" style="text-align:center;margin:6px 0 4px" id="version-txt"></p>
+</section>
+
+</div>
+</main>
+
+<!-- NAV -->
+<nav class="nav-bottom" id="nav">
+  <button class="nav-btn active" data-screen="hoy" onclick="irA('hoy')">
+    <span class="icon">🏠</span>Hoy
+  </button>
+  <button class="nav-btn" data-screen="planificar" onclick="irA('planificar')">
+    <span class="icon">📅</span>Semana
+  </button>
+  <button class="nav-btn" data-screen="heladera" onclick="irA('heladera')">
+    <span class="icon">🧊</span>Heladera
+  </button>
+  <button class="nav-btn" data-screen="mandados" onclick="irA('mandados')">
+    <span class="icon">🛒</span>Mandados
+  </button>
+  <button class="nav-btn" data-screen="mas" onclick="irA('mas')">
+    <span class="icon">⭐</span>Más
+  </button>
+</nav>
+
+</div>
+
+<!-- MODAL RECETA -->
+<div class="modal-overlay" id="modal-receta">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="receta-titulo"></div>
+    <div id="receta-contenido"></div>
+    <button class="btn btn-outline btn-block" style="margin-top:12px" onclick="cerrarModal('modal-receta')">Cerrar</button>
+  </div>
+</div>
+
+<!-- MODAL EMERGENCIA -->
+<div class="modal-overlay" id="modal-emergencia">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🆘 Alternativas rápidas</div>
+    <p class="muted" style="margin-bottom:14px">Tocá una para cambiar el <b id="emergencia-tipo">almuerzo</b> de hoy</p>
+    <div id="emergencia-opciones"></div>
+    <button class="btn btn-outline btn-block" style="margin-top:6px" onclick="abrirEmergencia(emergenciaTipo)">🔄 Otras opciones</button>
+    <button class="btn btn-outline btn-block" onclick="cerrarModal('modal-emergencia')">Cerrar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_VERSION = '1.0.0';
+
+// ============ DATOS BASE ============
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIAS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const CATS = {
+  carnes: '🥩 Carnes', pastas: '🍝 Pastas', verduras: '🥗 Verduras',
+  guisos: '🫕 Guisos y cazuelas', rapidas: '⚡ Rápidas', especiales: '🌟 Especiales'
+};
+
+const BANCO_DEFAULT = [
+  { nombre: 'Milanesas con papas fritas', cat: 'carnes', proteina: true, verdura: false, carbo: true, frito: true, descongelar: true },
+  { nombre: 'Pollo al horno con papas', cat: 'carnes', proteina: true, verdura: false, carbo: true, frito: false, descongelar: true },
+  { nombre: 'Fideos con tuco', cat: 'pastas', proteina: false, verdura: true, carbo: true, frito: false },
+  { nombre: 'Fideos con manteca y queso', cat: 'pastas', proteina: false, verdura: false, carbo: true, frito: false },
+  { nombre: 'Arroz con pollo', cat: 'carnes', proteina: true, verdura: true, carbo: true, frito: false, descongelar: true },
+  { nombre: 'Guiso de lentejas', cat: 'guisos', proteina: true, verdura: true, carbo: true, frito: false },
+  { nombre: 'Guiso de fideos', cat: 'guisos', proteina: true, verdura: true, carbo: true, frito: false, descongelar: true },
+  { nombre: 'Tortilla de papas', cat: 'rapidas', proteina: true, verdura: false, carbo: true, frito: false },
+  { nombre: 'Huevos revueltos', cat: 'rapidas', proteina: true, verdura: false, carbo: false, frito: false },
+  { nombre: 'Ensalada mixta con huevo', cat: 'verduras', proteina: true, verdura: true, carbo: false, frito: false },
+  { nombre: 'Bifes a la plancha con ensalada', cat: 'carnes', proteina: true, verdura: true, carbo: false, frito: false, descongelar: true },
+  { nombre: 'Pizza casera', cat: 'especiales', proteina: false, verdura: false, carbo: true, frito: false },
+  { nombre: 'Empanadas', cat: 'especiales', proteina: true, verdura: false, carbo: true, frito: false, descongelar: true },
+  { nombre: 'Cazuela de pollo', cat: 'guisos', proteina: true, verdura: true, carbo: false, frito: false, descongelar: true },
+  { nombre: 'Tarta de verduras', cat: 'verduras', proteina: true, verdura: true, carbo: true, frito: false },
+  { nombre: 'Arroz con leche (postre/cena liviana)', cat: 'rapidas', proteina: false, verdura: false, carbo: true, frito: false },
+  { nombre: 'Carne al horno con verduras', cat: 'carnes', proteina: true, verdura: true, carbo: false, frito: false, descongelar: true },
+  { nombre: 'Sopa de verduras', cat: 'guisos', proteina: false, verdura: true, carbo: false, frito: false },
+  { nombre: 'Revuelto gramajo', cat: 'rapidas', proteina: true, verdura: false, carbo: true, frito: true },
+  { nombre: 'Ñoquis con tuco', cat: 'pastas', proteina: false, verdura: true, carbo: true, frito: false },
+];
+
+const RECETAS = {
+  'Milanesas con papas fritas': {
+    tiempo: '35 min',
+    pasos: [
+      'Aplaná las milanesas y pasalas por huevo batido con sal, ajo y perejil, después por pan rallado.',
+      'Dejá reposar 10 minutos en la heladera para que se pegue bien el rebozado.',
+      'Freí en aceite bien caliente 3-4 minutos por lado hasta dorar (o al horno a 200° con un chorrito de aceite, 10 min por lado).',
+      'Cortá las papas en bastones, freí o llevá al horno con aceite y sal a 200° por 25 minutos.',
+      'Serví con limón y ensalada si querés.'
+    ],
+    ingredientes: ['Milanesas de carne o pollo (≈150 g c/u)', 'Huevos (1 cada 2 personas)', 'Pan rallado', 'Papas (1-2 por persona)', 'Aceite', 'Sal', 'Limón']
+  },
+  'Pollo al horno con papas': {
+    tiempo: '50 min',
+    pasos: [
+      'Cortá el pollo en presas. Condimentá con sal, pimienta, ajo, orégano y un chorrito de aceite.',
+      'Pelá y cortá las papas en cuartos. Mezclá con un poco de aceite y sal.',
+      'Poné todo en una asadera, el pollo con la piel hacia arriba.',
+      'Horno a 200° por 45-50 minutos hasta que dore.',
+      'Si querés más dorado, los últimos 5 minutos ponelo en grill.'
+    ],
+    ingredientes: ['Pollo (1 presa grande por persona)', 'Papas (1-2 por persona)', 'Ajo', 'Orégano', 'Aceite', 'Sal', 'Pimienta']
+  },
+  'Fideos con tuco': {
+    tiempo: '25 min',
+    pasos: [
+      'Herví agua con sal. Cuando rompe el hervor, agregá los fideos.',
+      'En una sartén, sofreí cebolla y ajo picados con aceite.',
+      'Agregá tomate triturado. Condimentá con sal, orégano y una pizca de azúcar para cortar la acidez.',
+      'Cociná la salsa a fuego bajo 15 minutos.',
+      'Colá los fideos al dente y mezclá con el tuco. Queso rallado encima.'
+    ],
+    ingredientes: ['Fideos (100 g por persona)', 'Tomate triturado (1 caja cada 4)', 'Cebolla', 'Ajo', 'Aceite', 'Orégano', 'Queso rallado']
+  },
+  'Fideos con manteca y queso': {
+    tiempo: '15 min',
+    pasos: [
+      'Herví abundante agua con sal y cociná los fideos según el paquete.',
+      'Colalos guardando un poquito del agua de cocción.',
+      'Mezclá en la olla con manteca, queso rallado y un chorrito del agua reservada hasta que quede cremoso.',
+      'Pimienta negra a gusto.'
+    ],
+    ingredientes: ['Fideos (100 g por persona)', 'Manteca', 'Queso rallado', 'Sal', 'Pimienta']
+  },
+  'Arroz con pollo': {
+    tiempo: '40 min',
+    pasos: [
+      'Dorá las presas de pollo en una cacerola con aceite. Retirá y reservá.',
+      'En la misma cacerola, sofreí cebolla, morrón y ajo picados.',
+      'Volvé a poner el pollo, cubrí con agua o caldo y condimentá con sal, cúrcuma y pimentón.',
+      'Cuando rompe el hervor, agregá el arroz (1 taza de arroz cada 2 de líquido).',
+      'Tapá y cociná a fuego bajo 20 minutos hasta que el arroz absorba el caldo.'
+    ],
+    ingredientes: ['Pollo', 'Arroz (½ taza por persona)', 'Cebolla', 'Morrón', 'Ajo', 'Caldo o agua', 'Cúrcuma', 'Pimentón']
+  },
+  'Guiso de lentejas': {
+    tiempo: '45 min',
+    pasos: [
+      'Remojá las lentejas desde la noche anterior (o usá lentejas de lata, lavadas).',
+      'Sofreí cebolla, ajo, morrón y zanahoria picados en aceite.',
+      'Agregá las lentejas escurridas y cubrí con agua o caldo.',
+      'Condimentá con sal, comino, pimentón y laurel.',
+      'Cociná a fuego medio 30-35 minutos hasta que estén tiernas. Podés sumar chorizo colorado.'
+    ],
+    ingredientes: ['Lentejas (80 g por persona)', 'Cebolla', 'Zanahoria', 'Morrón', 'Ajo', 'Chorizo colorado (opcional)', 'Comino', 'Pimentón', 'Laurel']
+  },
+  'Guiso de fideos': {
+    tiempo: '40 min',
+    pasos: [
+      'Dorá la carne en cubos (o picada) en una olla con aceite.',
+      'Agregá cebolla, morrón y zanahoria picados y rehogá 5 minutos.',
+      'Sumá tomate triturado, papa en cubos y cubrí con caldo. Condimentá con sal, pimentón y laurel.',
+      'Cociná 15 minutos, agregá los fideos (mostachol o codito) y seguí hasta que estén tiernos, agregando caldo si hace falta.'
+    ],
+    ingredientes: ['Carne en cubos o picada', 'Fideos guiseros', 'Papa', 'Zanahoria', 'Cebolla', 'Morrón', 'Tomate triturado', 'Caldo', 'Pimentón', 'Laurel']
+  },
+  'Tortilla de papas': {
+    tiempo: '25 min',
+    pasos: [
+      'Pelá y cortá las papas en rodajas finas. Freílas en aceite hasta que estén tiernas. Escurrí el exceso de aceite.',
+      'Batí 4-5 huevos con sal. Mezclá con las papas.',
+      'En una sartén antiadherente con un poco de aceite, volcá la mezcla.',
+      'Cociná a fuego medio-bajo, tapada, hasta que los bordes estén firmes.',
+      'Deslizala sobre un plato y volvé a la sartén del otro lado para dorar.'
+    ],
+    ingredientes: ['Papas (4 medianas cada 4)', 'Huevos (5 cada 4)', 'Aceite', 'Sal', 'Cebolla (opcional)']
+  },
+  'Huevos revueltos': {
+    tiempo: '10 min',
+    pasos: [
+      'Batí los huevos con sal y un chorrito de leche.',
+      'Derretí manteca en una sartén a fuego bajo.',
+      'Volcá los huevos y revolvé despacio con espátula hasta que cuajen pero sigan cremosos.',
+      'Serví con tostadas o ensalada.'
+    ],
+    ingredientes: ['Huevos (2 por persona)', 'Manteca', 'Leche', 'Sal', 'Pan para tostar']
+  },
+  'Ensalada mixta con huevo': {
+    tiempo: '15 min',
+    pasos: [
+      'Herví los huevos 10 minutos, enfrialos en agua fría y pelalos.',
+      'Lavá la lechuga y cortá tomate y zanahoria rallada.',
+      'Mezclá todo en una fuente y sumá los huevos en cuartos.',
+      'Condimentá con sal, aceite y vinagre o limón.'
+    ],
+    ingredientes: ['Lechuga', 'Tomate', 'Zanahoria', 'Huevos (1 por persona)', 'Aceite', 'Vinagre o limón', 'Sal']
+  },
+  'Bifes a la plancha con ensalada': {
+    tiempo: '20 min',
+    pasos: [
+      'Sacá los bifes de la heladera 15 minutos antes.',
+      'Calentá bien la plancha o sartén con unas gotas de aceite.',
+      'Cociná 3-4 minutos por lado según el punto. Salá recién al final.',
+      'Acompañá con ensalada de lechuga, tomate y zanahoria.'
+    ],
+    ingredientes: ['Bifes (1 por persona)', 'Lechuga', 'Tomate', 'Zanahoria', 'Aceite', 'Sal']
+  },
+  'Pizza casera': {
+    tiempo: '1 h 20 min',
+    pasos: [
+      'Mezclá 500 g de harina, 10 g de levadura, sal, 2 cucharadas de aceite y 300 ml de agua tibia. Amasá 10 minutos.',
+      'Dejá levar tapada 40 minutos en un lugar cálido.',
+      'Estirá en una pizzera aceitada y cubrí con salsa de tomate condimentada con orégano y sal.',
+      'Precocé 10 minutos a horno fuerte (220°).',
+      'Sumá la mozzarella y volvé al horno hasta que se derrita. Aceitunas y orégano a gusto.'
+    ],
+    ingredientes: ['Harina 000 (500 g por pizza)', 'Levadura', 'Tomate triturado', 'Queso mozzarella', 'Aceite', 'Orégano', 'Aceitunas']
+  },
+  'Empanadas': {
+    tiempo: '1 h',
+    pasos: [
+      'Rehogá cebolla picada en aceite, agregá la carne picada y cociná hasta que pierda el color rosado.',
+      'Condimentá con sal, comino, pimentón y ají molido. Dejá enfriar.',
+      'Sumá huevo duro picado y, si te gusta, aceitunas.',
+      'Rellená las tapas, cerrá con repulgue y pintá con huevo.',
+      'Horno a 200° por 15-20 minutos hasta dorar.'
+    ],
+    ingredientes: ['Tapas de empanada (3 por persona)', 'Carne picada', 'Cebolla', 'Huevos', 'Comino', 'Pimentón', 'Aceitunas (opcional)']
+  },
+  'Cazuela de pollo': {
+    tiempo: '45 min',
+    pasos: [
+      'Dorá las presas de pollo en una olla con aceite.',
+      'Agregá cebolla, morrón y zanahoria en trozos y rehogá.',
+      'Sumá papa y zapallo en cubos, cubrí con caldo y condimentá.',
+      'Cociná tapado a fuego medio 30 minutos. Si querés, agregá choclo o arvejas al final.'
+    ],
+    ingredientes: ['Pollo', 'Papa', 'Zanahoria', 'Cebolla', 'Morrón', 'Zapallo', 'Caldo', 'Choclo o arvejas (opcional)']
+  },
+  'Tarta de verduras': {
+    tiempo: '50 min',
+    pasos: [
+      'Hervé o saltá la espinaca o acelga y escurrila muy bien. Picala.',
+      'Rehogá cebolla picada en aceite y mezclá con la verdura.',
+      'Sumá 3 huevos batidos, queso rallado o en cubos, sal, pimienta y nuez moscada.',
+      'Forrá una tartera con una tapa, volcá el relleno y cubrí con la otra tapa (o hacé enrejado).',
+      'Horno a 200° por 30-35 minutos hasta dorar.'
+    ],
+    ingredientes: ['Tapas de tarta (2)', 'Espinaca o acelga', 'Cebolla', 'Huevos (3)', 'Queso', 'Nuez moscada']
+  },
+  'Arroz con leche (postre/cena liviana)': {
+    tiempo: '40 min',
+    pasos: [
+      'Herví el arroz en agua 5 minutos y colalo.',
+      'Ponelo en 1 litro de leche con cáscara de limón y una rama de canela.',
+      'Cociná a fuego bajo revolviendo seguido, 25-30 minutos, hasta que espese.',
+      'Agregá azúcar a gusto al final. Serví con canela en polvo.'
+    ],
+    ingredientes: ['Arroz (150 g cada 4)', 'Leche (1 litro)', 'Azúcar', 'Canela', 'Limón']
+  },
+  'Carne al horno con verduras': {
+    tiempo: '1 h 15 min',
+    pasos: [
+      'Condimentá la carne (peceto, roast beef o vacío) con sal, pimienta, ajo y un chorrito de aceite.',
+      'Cortá papa, zapallo, cebolla y morrón en trozos grandes.',
+      'Poné todo en una asadera con un poco de agua o caldo en la base.',
+      'Horno a 200° por 60-70 minutos, dando vuelta la carne a mitad de cocción.'
+    ],
+    ingredientes: ['Carne vacuna (250 g por persona)', 'Papa', 'Zapallo', 'Cebolla', 'Morrón', 'Ajo', 'Aceite']
+  },
+  'Sopa de verduras': {
+    tiempo: '40 min',
+    pasos: [
+      'Pelá y cortá en cubos zanahoria, papa, zapallito, apio y cebolla.',
+      'Rehogá la cebolla en una olla con un poco de aceite.',
+      'Sumá el resto de las verduras y cubrí con agua o caldo.',
+      'Cociná 25-30 minutos. Podés dejarla en trozos o licuarla para que quede crema.'
+    ],
+    ingredientes: ['Zanahoria', 'Papa', 'Zapallito', 'Apio', 'Cebolla', 'Caldo', 'Fideos de sopa (opcional)']
+  },
+  'Revuelto gramajo': {
+    tiempo: '20 min',
+    pasos: [
+      'Cortá las papas en bastones finos (tipo paja) y freílas. También podés usar papas pay.',
+      'En una sartén grande, saltá el jamón en tiras con un poco de manteca. Si te gusta, sumá cebolla y arvejas.',
+      'Agregá los huevos batidos con sal y revolvé.',
+      'Antes de que cuajen del todo, sumá las papas y mezclá.'
+    ],
+    ingredientes: ['Papas', 'Huevos (2 por persona)', 'Jamón cocido', 'Manteca', 'Arvejas (opcional)']
+  },
+  'Ñoquis con tuco': {
+    tiempo: '30 min',
+    pasos: [
+      'Prepará el tuco: sofreí cebolla y ajo, sumá tomate triturado, sal, orégano y cociná 15 minutos.',
+      'Herví abundante agua con sal.',
+      'Echá los ñoquis de a tandas; cuando suben a la superficie están listos.',
+      'Sacalos con espumadera, mezclá con el tuco y queso rallado.'
+    ],
+    ingredientes: ['Ñoquis (200 g por persona)', 'Tomate triturado', 'Cebolla', 'Ajo', 'Orégano', 'Queso rallado']
+  },
+};
+
+const EMERGENCIAS = [
+  { nombre: 'Huevos revueltos con tostadas', tiempo: '10 min', emoji: '🍳' },
+  { nombre: 'Fideos con manteca y queso', tiempo: '15 min', emoji: '🧀' },
+  { nombre: 'Arroz blanco con huevo frito', tiempo: '20 min', emoji: '🍚' },
+  { nombre: 'Sándwiches de jamón y queso', tiempo: '5 min', emoji: '🥪' },
+  { nombre: 'Sopa de sobre con tostadas', tiempo: '10 min', emoji: '🍵' },
+  { nombre: 'Revuelto gramajo', tiempo: '20 min', emoji: '🥚' },
+  { nombre: 'Panqueques con dulce de leche', tiempo: '20 min', emoji: '🥞' },
+  { nombre: 'Tostados con ensalada', tiempo: '10 min', emoji: '🥗' },
+  { nombre: 'Omelette de queso', tiempo: '10 min', emoji: '🍳' },
+  { nombre: 'Delivery / rotisería', tiempo: '30 min', emoji: '🛵' },
+];
+
+const IDEAS_VISITA = ['Empanadas', 'Pizza casera', 'Carne al horno con verduras', 'Pollo al horno con papas', 'Tarta de verduras'];
+
+const INGREDIENTES_BASE = [
+  { nombre: 'Pollo', icon: '🍗', comidas: ['Arroz con pollo', 'Cazuela de pollo', 'Pollo al horno con papas', 'Milanesas con papas fritas'] },
+  { nombre: 'Carne', icon: '🥩', comidas: ['Milanesas con papas fritas', 'Bifes a la plancha con ensalada', 'Carne al horno con verduras', 'Empanadas', 'Guiso de fideos'] },
+  { nombre: 'Huevos', icon: '🥚', comidas: ['Tortilla de papas', 'Huevos revueltos', 'Ensalada mixta con huevo', 'Revuelto gramajo', 'Tarta de verduras', 'Milanesas con papas fritas'] },
+  { nombre: 'Papas', icon: '🥔', comidas: ['Milanesas con papas fritas', 'Pollo al horno con papas', 'Tortilla de papas', 'Revuelto gramajo', 'Carne al horno con verduras', 'Cazuela de pollo'] },
+  { nombre: 'Fideos', icon: '🍝', comidas: ['Fideos con tuco', 'Fideos con manteca y queso', 'Guiso de fideos'] },
+  { nombre: 'Arroz', icon: '🍚', comidas: ['Arroz con pollo', 'Arroz con leche (postre/cena liviana)'] },
+  { nombre: 'Tomate', icon: '🍅', comidas: ['Fideos con tuco', 'Ensalada mixta con huevo', 'Ñoquis con tuco', 'Pizza casera', 'Bifes a la plancha con ensalada'] },
+  { nombre: 'Verduras', icon: '🥗', comidas: ['Tarta de verduras', 'Sopa de verduras', 'Ensalada mixta con huevo', 'Carne al horno con verduras', 'Cazuela de pollo'] },
+  { nombre: 'Lentejas', icon: '🫘', comidas: ['Guiso de lentejas'] },
+  { nombre: 'Queso', icon: '🧀', comidas: ['Fideos con manteca y queso', 'Pizza casera', 'Tarta de verduras'] },
+  { nombre: 'Harina', icon: '🌾', comidas: ['Pizza casera', 'Empanadas', 'Tarta de verduras'] },
+  { nombre: 'Leche', icon: '🥛', comidas: ['Arroz con leche (postre/cena liviana)', 'Huevos revueltos'] },
+  { nombre: 'Jamón', icon: '🥓', comidas: ['Revuelto gramajo'] },
+  { nombre: 'Cebolla', icon: '🧅', comidas: ['Fideos con tuco', 'Guiso de lentejas', 'Arroz con pollo', 'Empanadas', 'Sopa de verduras'] },
+  { nombre: 'Ñoquis', icon: '🥟', comidas: ['Ñoquis con tuco'] },
+];
+
+const MANDADOS_COMIDA = {
+  'Milanesas con papas fritas': { carniceria: ['Milanesas'], almacen: ['Pan rallado', 'Aceite', 'Huevos'], verduleria: ['Papas', 'Limón'] },
+  'Pollo al horno con papas': { carniceria: ['Pollo'], verduleria: ['Papas', 'Ajo'], almacen: ['Orégano'] },
+  'Fideos con tuco': { almacen: ['Fideos', 'Tomate triturado', 'Orégano', 'Queso rallado'], verduleria: ['Cebolla', 'Ajo'] },
+  'Arroz con pollo': { carniceria: ['Pollo'], almacen: ['Arroz', 'Caldo', 'Cúrcuma', 'Pimentón'], verduleria: ['Cebolla', 'Morrón', 'Ajo'] },
+  'Guiso de lentejas': { almacen: ['Lentejas', 'Comino', 'Pimentón'], verduleria: ['Cebolla', 'Zanahoria', 'Morrón', 'Ajo'], carniceria: ['Chorizo colorado'] },
+  'Tortilla de papas': { almacen: ['Huevos', 'Aceite'], verduleria: ['Papas'] },
+  'Guiso de fideos': { almacen: ['Fideos guiseros', 'Tomate triturado', 'Caldo'], verduleria: ['Cebolla', 'Zanahoria', 'Papas', 'Morrón'], carniceria: ['Carne para guiso'] },
+  'Pizza casera': { almacen: ['Harina', 'Levadura', 'Tomate triturado', 'Aceitunas'], fiambreria: ['Queso mozzarella'] },
+  'Empanadas': { almacen: ['Tapas de empanada', 'Huevos', 'Comino'], verduleria: ['Cebolla'], carniceria: ['Carne picada'] },
+  'Tarta de verduras': { almacen: ['Tapas de tarta', 'Huevos'], fiambreria: ['Queso'], verduleria: ['Espinaca o acelga', 'Cebolla'] },
+  'Ñoquis con tuco': { almacen: ['Ñoquis', 'Tomate triturado', 'Queso rallado'], verduleria: ['Cebolla', 'Ajo'] },
+  'Fideos con manteca y queso': { almacen: ['Fideos', 'Manteca', 'Queso rallado'] },
+  'Huevos revueltos': { almacen: ['Huevos', 'Manteca', 'Pan'] },
+  'Cazuela de pollo': { carniceria: ['Pollo'], verduleria: ['Papas', 'Zanahoria', 'Cebolla', 'Morrón', 'Zapallo'], almacen: ['Caldo'] },
+  'Carne al horno con verduras': { carniceria: ['Carne para horno'], verduleria: ['Papas', 'Zapallo', 'Cebolla', 'Morrón', 'Ajo'] },
+  'Sopa de verduras': { verduleria: ['Zanahoria', 'Papas', 'Zapallito', 'Apio', 'Cebolla'], almacen: ['Caldo'] },
+  'Bifes a la plancha con ensalada': { carniceria: ['Bifes'], verduleria: ['Lechuga', 'Tomate', 'Zanahoria'] },
+  'Ensalada mixta con huevo': { almacen: ['Huevos'], verduleria: ['Lechuga', 'Tomate', 'Zanahoria'] },
+  'Revuelto gramajo': { almacen: ['Huevos'], fiambreria: ['Jamón cocido'], verduleria: ['Papas'] },
+  'Arroz con leche (postre/cena liviana)': { almacen: ['Arroz', 'Leche', 'Azúcar', 'Canela'] },
+};
+
+const CAT_MANDADOS = ['verduleria', 'carniceria', 'fiambreria', 'almacen', 'otros'];
+const ICONOS_MANDADOS = { verduleria: '🥦', carniceria: '🥩', almacen: '🛒', fiambreria: '🧀', otros: '📝' };
+const NOMBRES_MANDADOS = { verduleria: 'Verdulería', carniceria: 'Carnicería', almacen: 'Almacén / Súper', fiambreria: 'Fiambrería', otros: 'Otros' };
+
+// ============ UTILIDADES ============
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// Fecha local (no UTC), así a la noche no "salta" al día siguiente
+function keyDe(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function diaMas(n) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d; }
+function getHoyKey() { return keyDe(new Date()); }
+function fechaCorta(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  const f = new Date(y, m - 1, d);
+  return DIAS[f.getDay()] + ' ' + d + '/' + m;
+}
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ============ ESTADO ============
+const STORAGE_KEY = 'queComemosState';
+function estadoInicial() {
+  return {
+    menu: {},
+    banco: BANCO_DEFAULT.map(c => ({ ...c })),
+    favoritos: [],
+    rechazados: [],
+    historial: [],
+    ingredientesSeleccionados: [],
+    porciones: 4,
+    invitados: 2,
+    presupuesto: 0,
+    mandadosTachados: [],
+    mandadosExtra: [],
+    diasMandados: 3,
+    modoVisita: false,
+    modoVisitaFecha: '',
+  };
+}
+let state = estadoInicial();
+
+function cargarState() {
+  let s = null;
+  try { s = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  if (!s) return;
+  try {
+    const parsed = JSON.parse(s);
+    state = { ...estadoInicial(), ...parsed };
+    if (!Array.isArray(state.banco) || state.banco.length < 5) state.banco = BANCO_DEFAULT.map(c => ({ ...c }));
+    // Completar datos nuevos en comidas de fábrica (p. ej. "descongelar")
+    BANCO_DEFAULT.forEach(def => {
+      const b = state.banco.find(x => x.nombre === def.nombre);
+      if (b && !b.propia) Object.keys(def).forEach(k => { if (b[k] === undefined) b[k] = def[k]; });
+    });
+    ['favoritos', 'rechazados', 'historial', 'ingredientesSeleccionados', 'mandadosTachados', 'mandadosExtra']
+      .forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
+    if (!state.menu || typeof state.menu !== 'object') state.menu = {};
+    // El modo visita dura solo el día en que se activó
+    if (state.modoVisita && state.modoVisitaFecha !== getHoyKey()) state.modoVisita = false;
+  } catch (e) {}
+}
+
+function guardarState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('⚠️ No se pudo guardar en este dispositivo'); }
+}
+
+function infoComida(nombre) { return state.banco.find(b => b.nombre === nombre); }
+
+// ============ NAVEGACIÓN ============
+let pantallaActual = 'hoy';
+function irA(screen) {
+  pantallaActual = screen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.screen === screen));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.getElementById('content').scrollTop = 0;
+  renderScreen(screen);
+  try { history.replaceState(null, '', '#' + screen); } catch (e) {}
+}
+
+function renderScreen(screen) {
+  if (screen === 'hoy') renderHoy();
+  if (screen === 'planificar') renderPlanificador();
+  if (screen === 'heladera') renderHeladera();
+  if (screen === 'mandados') renderMandados();
+  if (screen === 'mas') renderMas();
+}
+
+// ============ HOY ============
+function renderHoy() {
+  const hoy = getHoyKey();
+  const menu = state.menu[hoy] || {};
+
+  document.getElementById('hoy-almuerzo-nombre').textContent = menu.almuerzo || '— No planificado —';
+  document.getElementById('hoy-cena-nombre').textContent = menu.cena || '— No planificado —';
+
+  // Alerta freezer: lo de mañana que necesita descongelar
+  const menuManana = state.menu[keyDe(diaMas(1))] || {};
+  const aDescongelar = [menuManana.almuerzo, menuManana.cena].filter(Boolean).filter(c => (infoComida(c) || {}).descongelar);
+  const alertaEl = document.getElementById('alerta-freezer');
+  alertaEl.innerHTML = aDescongelar.length
+    ? `<div class="alert-box">🧊 <strong>Acordate de sacar del freezer</strong>Mañana hay ${aDescongelar.map(esc).join(' y ')}: sacá la carne o el pollo esta noche.</div>`
+    : '';
+
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = diaMas(i);
+    const m = state.menu[keyDe(d)] || {};
+    html += `<div class="dia-row ${i === 0 ? 'dia-hoy' : ''}" onclick="irA('planificar')">
+      <div class="dia-nombre">${i === 0 ? 'Hoy' : DIAS[d.getDay()]}</div>
+      <div class="dia-comidas">
+        <span class="dia-comida-tag ${m.almuerzo ? '' : 'vacio'}">${m.almuerzo ? '☀️ ' + esc(m.almuerzo) : '☀️ —'}</span>
+        <span class="dia-comida-tag cena ${m.cena ? '' : 'vacio'}">${m.cena ? '🌙 ' + esc(m.cena) : '🌙 —'}</span>
+      </div>
+    </div>`;
+  }
+  document.getElementById('semana-resumen').innerHTML = html;
+
+  document.getElementById('toggle-visita').className = 'toggle' + (state.modoVisita ? ' on' : '');
+  document.getElementById('visita-banner-hoy').style.display = state.modoVisita ? 'block' : 'none';
+  document.getElementById('visita-extra').style.display = state.modoVisita ? 'block' : 'none';
+  document.getElementById('invitados-num').textContent = state.invitados;
+  document.getElementById('visita-ideas').textContent = IDEAS_VISITA.join(', ') + '.';
+}
+
+function toggleVisita() {
+  state.modoVisita = !state.modoVisita;
+  state.modoVisitaFecha = getHoyKey();
+  guardarState();
+  renderHoy();
+}
+
+function cambiarInvitados(delta) {
+  state.invitados = Math.max(1, Math.min(30, state.invitados + delta));
+  guardarState();
+  document.getElementById('invitados-num').textContent = state.invitados;
+}
+
+function porcionesHoy() {
+  return state.porciones + (state.modoVisita ? state.invitados : 0);
+}
+
+// ============ PLANIFICADOR ============
+function opcionesComidas(seleccion) {
+  let html = '<option value="">— Sin planificar —</option>';
+  const enBanco = state.banco.some(c => c.nombre === seleccion);
+  if (seleccion && !enBanco) html += `<option value="${esc(seleccion)}" selected>${esc(seleccion)}</option>`;
+  Object.entries(CATS).forEach(([cat, label]) => {
+    const items = state.banco.filter(c => c.cat === cat);
+    if (!items.length) return;
+    html += `<optgroup label="${esc(label)}">` + items.map(c =>
+      `<option value="${esc(c.nombre)}" ${seleccion === c.nombre ? 'selected' : ''}>${state.favoritos.includes(c.nombre) ? '❤️ ' : ''}${esc(c.nombre)}</option>`
+    ).join('') + '</optgroup>';
+  });
+  return html;
+}
+
+function renderPlanificador() {
+  document.getElementById('porciones-num').textContent = state.porciones;
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = diaMas(i);
+    const key = keyDe(d);
+    const menu = state.menu[key] || {};
+    html += `<div class="card planif-dia ${i === 0 ? 'es-hoy' : ''}">
+      <div class="card-title">${DIAS_FULL[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1} ${i === 0 ? '· hoy' : ''}</div>
+      <label>☀️ Almuerzo</label>
+      <select data-key="${key}" data-tipo="almuerzo" onchange="guardarMenu(this.dataset.key, this.dataset.tipo, this.value)">${opcionesComidas(menu.almuerzo)}</select>
+      <label>🌙 Cena</label>
+      <select data-key="${key}" data-tipo="cena" onchange="guardarMenu(this.dataset.key, this.dataset.tipo, this.value)" style="margin-bottom:0">${opcionesComidas(menu.cena)}</select>
+    </div>`;
+  }
+  document.getElementById('planificador-dias').innerHTML = html;
+  renderBancoPropias();
+}
+
+function registrarHistorial(key, tipo, valor) {
+  // Un solo registro por día y comida (se reemplaza si cambia)
+  state.historial = state.historial.filter(h => !(h.fecha === key && h.tipo === tipo));
+  if (valor) state.historial.push({ comida: valor, fecha: key, tipo });
+  state.historial.sort((a, b) => (b.fecha + (b.tipo === 'cena' ? '1' : '0')).localeCompare(a.fecha + (a.tipo === 'cena' ? '1' : '0')));
+  if (state.historial.length > 200) state.historial.length = 200;
+}
+
+function guardarMenu(key, tipo, valor) {
+  if (!state.menu[key]) state.menu[key] = {};
+  if (valor) state.menu[key][tipo] = valor; else delete state.menu[key][tipo];
+  registrarHistorial(key, tipo, valor);
+  guardarState();
+  if (pantallaActual === 'hoy') renderHoy();
+}
+
+function completarSemana() {
+  const disponibles = state.banco.filter(c => !state.rechazados.includes(c.nombre));
+  if (!disponibles.length) { toast('No hay comidas disponibles en el banco'); return; }
+  // Lo que ya está planificado en la semana, para no repetir
+  const usadas = {};
+  const contar = n => { if (n) usadas[n] = (usadas[n] || 0) + 1; };
+  for (let i = -3; i < 7; i++) { const m = state.menu[keyDe(diaMas(i))] || {}; contar(m.almuerzo); contar(m.cena); }
+  let agregadas = 0;
+  for (let i = 0; i < 7; i++) {
+    const key = keyDe(diaMas(i));
+    if (!state.menu[key]) state.menu[key] = {};
+    ['almuerzo', 'cena'].forEach(tipo => {
+      if (state.menu[key][tipo]) return;
+      const otro = state.menu[key][tipo === 'almuerzo' ? 'cena' : 'almuerzo'];
+      const catOtro = otro && (infoComida(otro) || {}).cat;
+      const puntuadas = disponibles.map(c => {
+        let p = Math.random() * 3;
+        p -= (usadas[c.nombre] || 0) * 4;
+        if (state.favoritos.includes(c.nombre)) p += 2;
+        if (catOtro && c.cat === catOtro) p -= 2;
+        if (tipo === 'cena' && c.cat === 'rapidas') p += 0.5;
+        return [c, p];
+      }).sort((a, b) => b[1] - a[1]);
+      const elegida = puntuadas[0][0].nombre;
+      state.menu[key][tipo] = elegida;
+      registrarHistorial(key, tipo, elegida);
+      contar(elegida);
+      agregadas++;
+    });
+  }
+  guardarState();
+  renderPlanificador();
+  toast(agregadas ? `✨ Completé ${agregadas} comida${agregadas > 1 ? 's' : ''}` : 'La semana ya está completa');
+}
+
+function cambiarPorciones(delta) {
+  state.porciones = Math.max(1, Math.min(20, state.porciones + delta));
+  document.getElementById('porciones-num').textContent = state.porciones;
+  guardarState();
+}
+
+document.addEventListener('click', e => {
+  const chk = e.target.closest('#nueva-comida-flags .chk');
+  if (chk) chk.classList.toggle('on');
+});
+
+function agregarComidaBanco() {
+  const nombre = document.getElementById('nueva-comida-nombre').value.trim();
+  const cat = document.getElementById('nueva-comida-cat').value;
+  const ing = document.getElementById('nueva-comida-ing').value.split(',').map(s => s.trim()).filter(Boolean);
+  if (!nombre) { toast('Escribí el nombre de la comida'); return; }
+  if (state.banco.some(c => c.nombre.toLowerCase() === nombre.toLowerCase())) { toast('Esa comida ya está en el banco'); return; }
+  const flags = {};
+  document.querySelectorAll('#nueva-comida-flags .chk').forEach(b => { flags[b.dataset.flag] = b.classList.contains('on'); b.classList.remove('on'); });
+  state.banco.push({ nombre, cat, propia: true, ingredientes: ing, proteina: !!flags.proteina, verdura: !!flags.verdura, carbo: !!flags.carbo, frito: !!flags.frito, descongelar: !!flags.descongelar });
+  guardarState();
+  document.getElementById('nueva-comida-nombre').value = '';
+  document.getElementById('nueva-comida-ing').value = '';
+  renderPlanificador();
+  toast('✅ "' + nombre + '" agregada');
+}
+
+function renderBancoPropias() {
+  const propias = state.banco.map((c, i) => [c, i]).filter(([c]) => c.propia);
+  const el = document.getElementById('banco-propias');
+  if (!propias.length) { el.innerHTML = '<p class="muted">Todavía no agregaste comidas propias.</p>'; return; }
+  el.innerHTML = propias.map(([c, i]) => `
+    <div class="fav-item">
+      <div><div class="fav-nombre">${esc(c.nombre)}</div><div class="fav-sub">${esc(CATS[c.cat] || '')}${c.ingredientes && c.ingredientes.length ? ' · ' + esc(c.ingredientes.join(', ')) : ''}</div></div>
+      <div class="fav-actions"><button class="fav-btn" onclick="quitarDelBanco(${i})" aria-label="Quitar">🗑️</button></div>
+    </div>`).join('');
+}
+
+function quitarDelBanco(i) {
+  const c = state.banco[i];
+  if (!c || !c.propia) return;
+  if (!confirm('¿Quitar "' + c.nombre + '" del banco?')) return;
+  state.banco.splice(i, 1);
+  guardarState();
+  renderPlanificador();
+}
+
+// ============ RECETA ============
+function verReceta(tipo) {
+  const comida = (state.menu[getHoyKey()] || {})[tipo];
+  if (!comida) { toast('No hay ' + tipo + ' planificado para hoy'); return; }
+  abrirReceta(comida);
+}
+
+function abrirReceta(comida) {
+  const receta = RECETAS[comida];
+  const info = infoComida(comida);
+  document.getElementById('receta-titulo').textContent = comida;
+  const porc = porcionesHoy();
+  let html = '';
+  if (receta) {
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+      <span class="tag tag-verde">⏱ ${esc(receta.tiempo)}</span>
+      <span class="tag tag-naranja">👥 ${porc} porciones</span>
+      ${info && info.descongelar ? '<span class="tag tag-rojo">🧊 Descongelar antes</span>' : ''}
+    </div>`;
+    html += `<div style="margin-bottom:16px"><div class="card-title">Ingredientes</div>`;
+    html += receta.ingredientes.map(i => `<div class="ing-line">• ${esc(i)}</div>`).join('');
+    html += `</div><div class="card-title">Preparación</div>`;
+    html += receta.pasos.map((p, i) => `<div class="receta-paso"><div class="paso-num">${i + 1}</div><div class="paso-texto">${esc(p)}</div></div>`).join('');
+  } else if (info && info.ingredientes && info.ingredientes.length) {
+    html += `<div class="card-title">Ingredientes</div>` + info.ingredientes.map(i => `<div class="ing-line">• ${esc(i)}</div>`).join('');
+    html += `<p class="muted" style="margin-top:12px">Esta es una comida tuya, así que no tiene pasos cargados.</p>`;
+  } else {
+    html = `<div class="empty-state"><span class="emoji">📝</span><p>No hay receta cargada para esta comida todavía.</p></div>`;
+  }
+  html += `<a class="btn btn-outline btn-block" style="margin-top:12px;text-decoration:none" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent('receta ' + comida)}">🔎 Buscar más recetas</a>`;
+  document.getElementById('receta-contenido').innerHTML = html;
+  abrirModal('modal-receta');
+}
+
+// ============ EMERGENCIA ============
+let emergenciaTipo = 'almuerzo';
+let emergenciaOpciones = [];
+function abrirEmergencia(tipo) {
+  emergenciaTipo = tipo || 'almuerzo';
+  document.getElementById('emergencia-tipo').textContent = emergenciaTipo === 'cena' ? 'la cena' : 'el almuerzo';
+  emergenciaOpciones = [...EMERGENCIAS].sort(() => Math.random() - 0.5).slice(0, 4);
+  document.getElementById('emergencia-opciones').innerHTML = emergenciaOpciones.map((e, i) => `
+    <button class="opcion-card" onclick="usarEmergencia(${i})">
+      <span class="emoji">${e.emoji}</span>
+      <div><div class="nombre">${esc(e.nombre)}</div><div class="sub">⏱ ${esc(e.tiempo)}</div></div>
+      <span class="accion">Usar</span>
+    </button>`).join('');
+  abrirModal('modal-emergencia');
+}
+
+function usarEmergencia(i) {
+  const e = emergenciaOpciones[i];
+  if (!e) return;
+  guardarMenu(getHoyKey(), emergenciaTipo, e.nombre);
+  cerrarModal('modal-emergencia');
+  renderHoy();
+  toast('✅ Cambiado a ' + e.nombre);
+}
+
+// ============ HELADERA ============
+function renderHeladera() {
+  document.getElementById('ingredientes-grid').innerHTML = INGREDIENTES_BASE.map((ing, i) => `
+    <button class="ing-item ${state.ingredientesSeleccionados.includes(ing.nombre) ? 'selected' : ''}" onclick="toggleIngrediente(${i})">
+      <span class="ing-icon">${ing.icon}</span>${esc(ing.nombre)}
+    </button>`).join('');
+}
+
+function toggleIngrediente(i) {
+  const nombre = INGREDIENTES_BASE[i].nombre;
+  const idx = state.ingredientesSeleccionados.indexOf(nombre);
+  if (idx > -1) state.ingredientesSeleccionados.splice(idx, 1);
+  else state.ingredientesSeleccionados.push(nombre);
+  guardarState();
+  renderHeladera();
+}
+
+function limpiarIngredientes() {
+  state.ingredientesSeleccionados = [];
+  guardarState();
+  renderHeladera();
+  document.getElementById('sugerencias-heladera').innerHTML = '';
+}
+
+let sugerenciasActuales = [];
+function buscarConIngredientes() {
+  const sel = state.ingredientesSeleccionados;
+  const cont = document.getElementById('sugerencias-heladera');
+  if (!sel.length) { cont.innerHTML = '<div class="card"><p class="muted">Seleccioná al menos un ingrediente.</p></div>'; return; }
+
+  const scores = {};
+  sel.forEach(nombre => {
+    const ing = INGREDIENTES_BASE.find(i => i.nombre === nombre);
+    if (ing) ing.comidas.forEach(c => { scores[c] = (scores[c] || 0) + 1; });
+  });
+  // Comidas propias: buscar coincidencias en sus ingredientes
+  state.banco.filter(c => c.propia && c.ingredientes).forEach(c => {
+    const n = sel.filter(s => c.ingredientes.some(x => x.toLowerCase().includes(s.toLowerCase()))).length;
+    if (n) scores[c.nombre] = (scores[c.nombre] || 0) + n;
+  });
+
+  sugerenciasActuales = Object.entries(scores)
+    .filter(([c]) => !state.rechazados.includes(c))
+    .sort((a, b) => b[1] - a[1] || (state.favoritos.includes(b[0]) - state.favoritos.includes(a[0])))
+    .slice(0, 6);
+
+  let html = '<div class="card"><div class="card-title">Podés cocinar</div>';
+  if (!sugerenciasActuales.length) {
+    html += '<div class="empty-state"><span class="emoji">🤔</span><p>No encontré combinaciones con esos ingredientes.</p></div>';
+  } else {
+    html += sugerenciasActuales.map(([comida, score], i) => `
+      <div class="fav-item">
+        <div style="min-width:0">
+          <div class="fav-nombre">${state.favoritos.includes(comida) ? '❤️ ' : ''}${esc(comida)}</div>
+          <div class="fav-sub">${score} ingrediente${score > 1 ? 's' : ''} que tenés · <a href="#" onclick="event.preventDefault();abrirReceta(sugerenciasActuales[${i}][0])" style="color:var(--verde)">ver receta</a></div>
+        </div>
+        <button class="btn btn-sm btn-outline" style="flex-shrink:0" onclick="asignarHoy(${i})">+ Hoy</button>
+      </div>`).join('');
+  }
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+function asignarHoy(i) {
+  const comida = sugerenciasActuales[i] && sugerenciasActuales[i][0];
+  if (!comida) return;
+  const hoy = getHoyKey();
+  const m = state.menu[hoy] || {};
+  const hora = new Date().getHours();
+  // Antes de las 15 h va al almuerzo si está libre; si no, a la cena
+  const tipo = (!m.almuerzo && hora < 15) ? 'almuerzo' : (!m.cena ? 'cena' : (hora < 15 ? 'almuerzo' : 'cena'));
+  guardarMenu(hoy, tipo, comida);
+  toast('✅ "' + comida + '" para ' + (tipo === 'cena' ? 'la cena' : 'el almuerzo') + ' de hoy');
+}
+
+// ============ MANDADOS ============
+function calcularMandados() {
+  const categorias = {};
+  CAT_MANDADOS.forEach(c => categorias[c] = new Set());
+  for (let i = 0; i < state.diasMandados; i++) {
+    const menu = state.menu[keyDe(diaMas(i))] || {};
+    [menu.almuerzo, menu.cena].filter(Boolean).forEach(comida => {
+      const m = MANDADOS_COMIDA[comida];
+      if (m) Object.entries(m).forEach(([cat, items]) => items.forEach(it => (categorias[cat] || categorias.otros).add(it)));
+      else {
+        const info = infoComida(comida);
+        if (info && info.ingredientes) info.ingredientes.forEach(it => categorias.otros.add(it));
+      }
+    });
+  }
+  state.mandadosExtra.forEach(it => categorias.otros.add(it));
+  return categorias;
+}
+
+function renderMandados() {
+  document.getElementById('mandados-dias').value = String(state.diasMandados);
+  generarMandados();
+  document.getElementById('presupuesto-monto').textContent = (state.presupuesto || 0).toLocaleString('es-AR');
+  if (state.presupuesto > 0) document.getElementById('presupuesto-input').value = state.presupuesto;
+}
+
+function cambiarDiasMandados(v) {
+  state.diasMandados = parseInt(v) || 3;
+  guardarState();
+  generarMandados();
+}
+
+let mandadosVisibles = [];
+function generarMandados() {
+  const categorias = calcularMandados();
+  mandadosVisibles = [];
+  let html = '';
+  CAT_MANDADOS.forEach(cat => {
+    const items = [...categorias[cat]];
+    if (!items.length) return;
+    html += `<div class="mandado-categoria"><h4>${ICONOS_MANDADOS[cat]} ${NOMBRES_MANDADOS[cat]}</h4>`;
+    items.forEach(item => {
+      const idx = mandadosVisibles.push(item) - 1;
+      const tachado = state.mandadosTachados.includes(item);
+      const extra = state.mandadosExtra.includes(item);
+      html += `<label class="mandado-item ${tachado ? 'tachado' : ''}">
+        <input type="checkbox" ${tachado ? 'checked' : ''} onchange="tacharMandado(${idx}, this.checked, this)">
+        <span>${esc(item)}</span>
+        ${extra ? `<button class="quitar" onclick="event.preventDefault();quitarExtra(${idx})" aria-label="Quitar">✕</button>` : ''}
+      </label>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = `<div class="empty-state"><span class="emoji">📅</span><p>Planificá los próximos días para ver qué necesitás comprar.</p></div>`;
+  document.getElementById('lista-mandados').innerHTML = html;
+}
+
+function tacharMandado(idx, checked, el) {
+  const item = mandadosVisibles[idx];
+  if (checked) { if (!state.mandadosTachados.includes(item)) state.mandadosTachados.push(item); }
+  else state.mandadosTachados = state.mandadosTachados.filter(i => i !== item);
+  guardarState();
+  el.closest('.mandado-item').classList.toggle('tachado', checked);
+}
+
+function limpiarTachados() {
+  state.mandadosTachados = [];
+  guardarState();
+  generarMandados();
+}
+
+function agregarExtra() {
+  const inp = document.getElementById('mandado-extra');
+  const v = inp.value.trim();
+  if (!v) return;
+  if (!state.mandadosExtra.includes(v)) state.mandadosExtra.push(v);
+  inp.value = '';
+  guardarState();
+  generarMandados();
+}
+
+function quitarExtra(idx) {
+  const item = mandadosVisibles[idx];
+  state.mandadosExtra = state.mandadosExtra.filter(i => i !== item);
+  state.mandadosTachados = state.mandadosTachados.filter(i => i !== item);
+  guardarState();
+  generarMandados();
+}
+
+function compartirMandados() {
+  const categorias = calcularMandados();
+  let texto = '🛒 *Lista de mandados*\n\n';
+  let hay = false;
+  CAT_MANDADOS.forEach(cat => {
+    const items = [...categorias[cat]].filter(i => !state.mandadosTachados.includes(i));
+    if (!items.length) return;
+    hay = true;
+    texto += `${ICONOS_MANDADOS[cat]} *${NOMBRES_MANDADOS[cat]}*\n` + items.map(i => `• ${i}`).join('\n') + '\n\n';
+  });
+  if (!hay) { toast('No hay nada pendiente para comprar'); return; }
+  texto += '_Generado desde ¿Qué comemos?_';
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+
+function guardarPresupuesto() {
+  const val = parseInt(document.getElementById('presupuesto-input').value);
+  if (!val || isNaN(val) || val < 0) { toast('Ingresá un número válido'); return; }
+  state.presupuesto = val;
+  guardarState();
+  document.getElementById('presupuesto-monto').textContent = val.toLocaleString('es-AR');
+  toast('✅ Presupuesto guardado: $' + val.toLocaleString('es-AR'));
+}
+
+// ============ MÁS ============
+function renderMas() {
+  renderFavoritos();
+  renderRechazados();
+  renderNutri();
+  renderHistorial();
+  document.getElementById('version-txt').textContent = '¿Qué comemos? · versión ' + APP_VERSION;
+}
+
+function marcarFavorito(tipo) {
+  const comida = (state.menu[getHoyKey()] || {})[tipo];
+  if (!comida) { toast('No hay ' + tipo + ' planificado para hoy'); return; }
+  state.rechazados = state.rechazados.filter(r => r !== comida);
+  if (!state.favoritos.includes(comida)) {
+    state.favoritos.push(comida);
+    guardarState();
+    toast('❤️ "' + comida + '" guardada como favorita');
+  } else {
+    toast('Ya está en tus favoritas');
+  }
+}
+
+function renderFavoritos() {
+  const el = document.getElementById('lista-favoritos');
+  if (!state.favoritos.length) {
+    el.innerHTML = '<div class="empty-state"><span class="emoji">❤️</span><p>Tocá "Me gustó" en las comidas que más les gustan.</p></div>';
+    return;
+  }
+  el.innerHTML = state.favoritos.map((f, i) => `
+    <div class="fav-item">
+      <div class="fav-nombre">❤️ ${esc(f)}</div>
+      <div class="fav-actions">
+        <button class="fav-btn" onclick="moverARechazados(${i})" aria-label="No nos gustó">👎</button>
+        <button class="fav-btn" onclick="quitarFavorito(${i})" aria-label="Quitar">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function quitarFavorito(i) {
+  state.favoritos.splice(i, 1);
+  guardarState();
+  renderFavoritos();
+}
+
+function moverARechazados(i) {
+  const [c] = state.favoritos.splice(i, 1);
+  if (c && !state.rechazados.includes(c)) state.rechazados.push(c);
+  guardarState();
+  renderFavoritos(); renderRechazados();
+}
+
+function renderRechazados() {
+  const el = document.getElementById('lista-rechazados');
+  const opciones = state.banco.filter(c => !state.rechazados.includes(c.nombre));
+  let html = state.rechazados.length
+    ? state.rechazados.map((r, i) => `
+      <div class="fav-item">
+        <div class="fav-nombre">👎 ${esc(r)}</div>
+        <div class="fav-actions"><button class="fav-btn" onclick="quitarRechazado(${i})" aria-label="Quitar">↩️</button></div>
+      </div>`).join('')
+    : '<p class="muted" style="margin-bottom:10px">Las comidas que marques acá no se sugieren al completar la semana ni en la heladera.</p>';
+  html += `<select id="sel-rechazo" style="margin-top:10px;margin-bottom:0" onchange="agregarRechazado(this.value)">
+    <option value="">+ Marcar una comida que no les gusta…</option>
+    ${opciones.map(c => `<option value="${esc(c.nombre)}">${esc(c.nombre)}</option>`).join('')}
+  </select>`;
+  el.innerHTML = html;
+}
+
+function agregarRechazado(nombre) {
+  if (!nombre) return;
+  if (!state.rechazados.includes(nombre)) state.rechazados.push(nombre);
+  state.favoritos = state.favoritos.filter(f => f !== nombre);
+  guardarState();
+  renderFavoritos(); renderRechazados();
+}
+
+function quitarRechazado(i) {
+  state.rechazados.splice(i, 1);
+  guardarState();
+  renderRechazados();
+}
+
+function renderNutri() {
+  let proteina = 0, verdura = 0, carbo = 0, frito = 0, total = 0;
+  for (let i = 0; i < 7; i++) {
+    const menu = state.menu[keyDe(diaMas(-i))] || {};
+    [menu.almuerzo, menu.cena].filter(Boolean).forEach(nombre => {
+      const item = infoComida(nombre);
+      if (!item) return;
+      total++;
+      if (item.proteina) proteina++;
+      if (item.verdura) verdura++;
+      if (item.carbo) carbo++;
+      if (item.frito) frito++;
+    });
+  }
+  const el = document.getElementById('nutri-semana');
+  if (!total) { el.innerHTML = '<p class="muted">Planificá comidas para ver el balance de lo que comieron.</p>'; return; }
+
+  const pct = n => Math.round((n / total) * 100);
+  const color = p => p >= 60 ? 'fill-verde' : p >= 30 ? 'fill-amarillo' : 'fill-rojo';
+  const colorCarbo = p => p <= 60 ? 'fill-verde' : p <= 80 ? 'fill-amarillo' : 'fill-rojo';
+  const barras = [
+    { label: '🥩 Con proteína', pct: pct(proteina), c: color(pct(proteina)) },
+    { label: '🥗 Con verduras', pct: pct(verdura), c: color(pct(verdura)) },
+    { label: '🍝 Con harinas', pct: pct(carbo), c: colorCarbo(pct(carbo)) },
+    { label: '✅ Sin frituras', pct: 100 - pct(frito), c: color(100 - pct(frito)) },
+  ];
+  el.innerHTML = `<p class="muted" style="margin-bottom:10px">Sobre ${total} comida${total > 1 ? 's' : ''} de los últimos 7 días</p>` + barras.map(b => `
+    <div class="nutri-bar">
+      <div class="nutri-label"><span>${b.label}</span><span>${b.pct}%</span></div>
+      <div class="nutri-track"><div class="nutri-fill ${b.c}" style="width:${b.pct}%"></div></div>
+    </div>`).join('');
+}
+
+function renderHistorial() {
+  const el = document.getElementById('historial-lista');
+  const hoy = getHoyKey();
+  const pasadas = state.historial.filter(h => h.fecha <= hoy);
+  if (!pasadas.length) {
+    el.innerHTML = '<div class="empty-state"><span class="emoji">📋</span><p>Acá aparecen las comidas de los días que ya pasaron.</p></div>';
+    return;
+  }
+  el.innerHTML = pasadas.slice(0, 14).map(h => `
+    <div class="hist-item">
+      <span>${h.tipo === 'almuerzo' ? '☀️' : '🌙'} ${esc(h.comida)}</span>
+      <span class="hist-fecha">${h.fecha === hoy ? 'Hoy' : fechaCorta(h.fecha)}</span>
+    </div>`).join('');
+}
+
+// ============ DATOS ============
+function exportarDatos() {
+  const blob = new Blob([JSON.stringify({ app: 'que-comemos', version: APP_VERSION, fecha: new Date().toISOString(), state }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'que-comemos-' + getHoyKey() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('⬇️ Copia descargada');
+}
+
+function importarDatos(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const s = data.state || data;
+      if (!s || typeof s !== 'object' || !('menu' in s)) throw new Error('formato');
+      if (!confirm('¿Reemplazar los datos actuales por los de la copia?')) return;
+      state = { ...estadoInicial(), ...s };
+      guardarState();
+      cargarState(); // normaliza los datos importados
+      renderScreen(pantallaActual);
+      toast('✅ Datos restaurados');
+    } catch (e) {
+      toast('⚠️ Ese archivo no es una copia válida');
+    } finally {
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function borrarTodo() {
+  if (!confirm('¿Seguro? Se borra el menú, favoritas, historial y todo lo que cargaste.')) return;
+  state = estadoInicial();
+  guardarState();
+  renderScreen(pantallaActual);
+  toast('Datos borrados');
+}
+
+// ============ MODAL ============
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(o => o.classList.remove('open')); });
+
+// ============ INIT ============
+let diaRenderizado = '';
+function ponerFecha() {
+  const hoy = new Date();
+  const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const txt = `${diasSemana[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]}`;
+  document.getElementById('fecha-hoy').textContent = txt.charAt(0).toUpperCase() + txt.slice(1);
+  diaRenderizado = getHoyKey();
+}
+
+function init() {
+  cargarState();
+  ponerFecha();
+  renderHoy();
+  const inicial = (location.hash || '').replace('#', '');
+  irA(['hoy', 'planificar', 'heladera', 'mandados', 'mas'].includes(inicial) ? inicial : 'hoy');
+  // Si la app queda abierta y cambia el día, refrescar
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && diaRenderizado !== getHoyKey()) {
+      cargarState(); ponerFecha(); renderScreen(pantallaActual);
+    }
+  });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+}
+
+init();
+
+// ============ PWA ============
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
